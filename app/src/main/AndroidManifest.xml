@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- API 30+ package visibility: bu olmadan com.whatsapp görünmez,
+         ENABLE_STICKER_PACK intent'i sessizce patlar. -->
+    <queries>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+    </queries>
+
+    <application
+        android:name=".StickerLabApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.StickerLab">
+
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.StickerLab">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- WhatsApp bu provider'ı kendi process'inden okur.
+             readPermission ZORUNLU: bu satır olmadan WhatsApp provider'ı
+             package visibility nedeniyle hiç göremiyor, hata da vermiyor;
+             ekleme "handleStickerPackPreviewResult/failed" ile sessizce düşüyor. -->
+        <provider
+            android:name=".provider.StickerContentProvider"
+            android:authorities="${stickerAuthority}"
+            android:enabled="true"
+            android:exported="true"
+            android:readPermission="com.whatsapp.sticker.READ" />
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="subject_segment" />
+
+    </application>
+
+</manifest>

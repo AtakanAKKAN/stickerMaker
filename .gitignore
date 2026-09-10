@@ -1,0 +1,15 @@
+# Gradle / Android
+.gradle/
+build/
+/captures
+.externalNativeBuild
+.cxx
+
+# Yerel makineye özel: SDK yolu burada, depoya girmemeli
+local.properties
+
+# IDE
+*.iml
+.idea/
+
+.DS_Store
