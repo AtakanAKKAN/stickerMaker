@@ -1,10 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Play Store ikonuyla aynı marka: die-cut beyaz kenarlı sarı sticker yüzü.
+  Adaptive icon güvenli alanı 108dp'lik tuvalin ortasındaki 66dp; tüm çizim
+  merkeze yakın tutuluyor ki maskeleme kırpmasın.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+
+    <!-- die-cut beyaz kenar -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M54,28a26,26 0,1 0,0.1 0zM54,36a18,18 0,1 1,-0.1 0zM48,48a4,4 0,1 1,0 8a4,4 0,0 1,0 -8zM60,48a4,4 0,1 1,0 8a4,4 0,0 1,0 -8zM43,62h22a11,11 0,0 1,-22 0z" />
+        android:pathData="M54,54m-29.5,0a29.5,29.5 0 1,0 59,0a29.5,29.5 0 1,0 -59,0" />
+
+    <!-- sticker yüzü -->
+    <path
+        android:fillColor="#FFC83D"
+        android:pathData="M54,54m-24,0a24,24 0 1,0 48,0a24,24 0 1,0 -48,0" />
+
+    <!-- gözler -->
+    <path
+        android:fillColor="#2A2A3C"
+        android:pathData="M46,48m-3.4,0a3.4,3.4 0 1,0 6.8,0a3.4,3.4 0 1,0 -6.8,0" />
+    <path
+        android:fillColor="#2A2A3C"
+        android:pathData="M62,48m-3.4,0a3.4,3.4 0 1,0 6.8,0a3.4,3.4 0 1,0 -6.8,0" />
+
+    <!-- gülümseme -->
+    <path
+        android:pathData="M43.5,58 A12,12 0 0,0 64.5,58"
+        android:strokeColor="#2A2A3C"
+        android:strokeWidth="3.6"
+        android:strokeLineCap="round" />
 </vector>
