@@ -124,7 +124,7 @@ production erişimi açmaktır.
 | `applicationId` içinde "whatsapp" geçmiyor | ✅ `com.atakan.stickerlab` |
 | Uygulama adında "WhatsApp" geçmiyor | ✅ `StickerLab` |
 | AAB üretiliyor | ✅ 8.3 MB |
-| İmza yapılandırması | ✅ kod tarafı hazır, anahtar sende |
+| İmza yapılandırması | ✅ anahtar üretildi, AAB imzalı doğrulandı (10 Eylül 2026) |
 
 ### Bilinçli tercih: `isMinifyEnabled = false`
 
