@@ -5,10 +5,11 @@ pipeline, galeri fotoğrafından sticker üretimi (isteğe bağlı arka plan sil
 sticker editörü (sil / geri getir, fırça ve lasso, renkli kalem, metin ve emoji,
 zoom-pan, undo/redo) ve çoklu pack yönetimi (pack detayı, seçim modu,
 taşıma/kopyalama, tray ikonu).
-Sırada: Play Console internal testing yayını.
+Sırada: Play Console internal testing yayını — adımlar PLAY_YAYIN.md dosyasında.
 
 Proje kararları ve yol haritası için [STICKERLAB.md](STICKERLAB.md).
 Ekran akışı ve UI kararları için [EKRANLAR.md](EKRANLAR.md).
+Play Store yayını için [PLAY_YAYIN.md](PLAY_YAYIN.md).
 
 ## Derleme
 

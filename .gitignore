@@ -13,3 +13,8 @@ local.properties
 .idea/
 
 .DS_Store
+
+# Yayın imzası: anahtar ve parolalar asla depoya girmez
+keystore.properties
+*.jks
+*.keystore
