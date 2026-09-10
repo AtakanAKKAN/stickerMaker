@@ -32,13 +32,15 @@ JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" ./gradlew :app:bundleRel
 
 Çıktı: `app/build/outputs/bundle/release/app-release.aab`
 
-`keystore.properties` yoksa AAB imzasız üretilir ve Play Console kabul etmez;
-imzalı olduğunu doğrulamak için:
+`keystore.properties` yoksa AAB imzasız üretilir ve Play Console kabul etmez.
+İmzayı doğrulamak için — AAB jar imzası taşır, yani `apksigner` değil `jarsigner`:
 
 ```bash
-"$LOCALAPPDATA/Android/Sdk/build-tools/37.0.0/apksigner.bat" verify --print-certs \
-  app/build/outputs/bundle/release/app-release.aab
+"/c/Program Files/Android/Android Studio/jbr/bin/jarsigner.exe" -verify -certs app/build/outputs/bundle/release/app-release.aab
 ```
+
+`jar verified.` görmelisin. `BUNDLE-METADATA ... is signed in JarFile but is not
+signed in JarInputStream` uyarıları AAB'lerde normaldir, Play kabul eder.
 
 ## 3. Gizlilik politikası URL'si
 
