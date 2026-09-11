@@ -111,4 +111,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
+    // API 37 emulatorunde eski espresso InputManager.getInstance arıyor ve patlıyor
+    androidTestImplementation(libs.androidx.test.espresso.core)
 }

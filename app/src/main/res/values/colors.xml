@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#5B45E0</color>
+    <!-- Açılış anındaki pencere zemini. Compose teması yüklenene kadar
+         görünen renk bu; koyu temada beyaz parlamasın diye -night eşi var. -->
+    <color name="window_background">#FCFBFF</color>
 </resources>
