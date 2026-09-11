@@ -10,6 +10,8 @@ Sırada: Play Console internal testing yayını — adımlar PLAY_YAYIN.md dosya
 Proje kararları ve yol haritası için [STICKERLAB.md](STICKERLAB.md).
 Ekran akışı ve UI kararları için [EKRANLAR.md](EKRANLAR.md).
 Play Store yayını için [PLAY_YAYIN.md](PLAY_YAYIN.md).
+Devam eden tasarım yenilemesi için [TASARIM.md](TASARIM.md).
+Komutlar ve ortam tuzakları için [CLAUDE.md](CLAUDE.md).
 
 ## Derleme
 
