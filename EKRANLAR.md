@@ -133,20 +133,26 @@ Tam ekran, modal. En büyük parça (M4) ve fark yaratılacak yer.
 
 ```
 +------------------------------+
-| x            [<] [>]    Bitti|  ust bar
+| (x)        (<-) (->)      (v)|  ust bar, hepsi ikon
 +------------------------------+
 |                              |
 |         canvas               |  zoom + pan, damali zemin
 |      (gorsel + mask)         |
 |                              |
 +------------------------------+
-|    o---------  firca boyutu  |  aktif arac fircaysa
-+------------------------------+
-|  [renk paleti]               |  kalem/metin secildiyse
-|  [Sil][Geri getir][Kalem][Metin] |  arac
-|  [Firca] [Lasso]             |  sadece sil/geri getir icin
+| [firca|lasso] o------------  |  secenekler: baglama gore TEK satir
+|        ipucu yazisi          |  sadece gerektiginde
+| (Sil) (Geri getir)(Kalem)(Metin) |  56dp arac butonlari
 +------------------------------+
 ```
+
+Seçenek satırı seçili araca göre değişir:
+
+| Araç | Seçenek satırı |
+|---|---|
+| Sil / Geri getir | Fırça–lasso ikili düğmesi + (fırçadaysa) boyut slider'ı |
+| Kalem | Boyut slider'ı + renk paleti |
+| Metin | Boyut slider'ı + renk paleti + (seçili metin varsa) "Bitir" |
 
 | Araç | Davranış |
 |---|---|
@@ -166,6 +172,10 @@ Tam ekran, modal. En büyük parça (M4) ve fark yaratılacak yer.
   yoksa her zoom denemesi bir leke bırakırdı.
 - Boyut slider'ı sadece fırça seçiliyken görünür; lasso'da yer kaplamaz.
 - "Bitti" mask'i uygular; kapatırken değişiklik varsa onay sorar.
+- **Metin aracına dokunmak doğrudan yazma diyalogunu açar.** Önce ayrı bir
+  "Metin ekle" butonu vardı; araç seçip sonra ona basmak iki dokunuştu ve alt
+  çubukta kalıcı yer kaplıyordu. Seçili bir metin varken dokunuş yalnızca araca
+  döner, yazılan iptal olmasın diye.
 - Editör tam çözünürlükte değil, en fazla 1280 px kenarda çalışıyor. Çıktı
   zaten 512×512; fırça her dokunuşta bitmap'e yazdığı için büyük görselde
   akıcılık düşüyordu.

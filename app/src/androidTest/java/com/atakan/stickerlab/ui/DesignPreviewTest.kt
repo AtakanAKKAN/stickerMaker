@@ -25,6 +25,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.atakan.stickerlab.ui.editor.StickerEditorScreen
+import com.atakan.stickerlab.ui.editor.StickerEditorState
+import com.atakan.stickerlab.ui.editor.StickerEditorState.Tool
 import com.atakan.stickerlab.ui.theme.StickerIcons
 import com.atakan.stickerlab.ui.theme.StickerLabTheme
 import org.junit.Rule
@@ -76,6 +79,40 @@ class DesignPreviewTest {
 
     @Test
     fun ikon_seti_acik() = capture("icons-light", darkTheme = false) { IconGallery() }
+
+    // --- editör (Faz 3) ---
+
+    @Test
+    fun editor_silgi_koyu() = captureEditor("editor-erase-dark", true, Tool.Erase)
+
+    @Test
+    fun editor_silgi_acik() = captureEditor("editor-erase-light", false, Tool.Erase)
+
+    /** Kalem seçiliyken seçenek satırı boyut + renk paletini birlikte taşıyor. */
+    @Test
+    fun editor_kalem_koyu() = captureEditor("editor-pen-dark", true, Tool.Pen)
+
+    /** Lasso'da boyut slider'ı yerini ipucuna bırakıyor. */
+    @Test
+    fun editor_lasso_koyu() =
+        captureEditor("editor-lasso-dark", true, Tool.Erase, StickerEditorState.Mode.Lasso)
+
+    private fun captureEditor(
+        name: String,
+        darkTheme: Boolean,
+        tool: Tool,
+        mode: StickerEditorState.Mode = StickerEditorState.Mode.Brush,
+    ) {
+        val original = Bitmap.createBitmap(400, 400, Bitmap.Config.ARGB_8888)
+            .apply { eraseColor(android.graphics.Color.rgb(0xF2, 0x8C, 0x28)) }
+        val state = StickerEditorState(original, StickerEditorState.opaqueMask(400, 400)).apply {
+            this.tool = tool
+            this.mode = mode
+        }
+        capture(name, darkTheme) {
+            StickerEditorScreen(state = state, onApply = {}, onCancel = {})
+        }
+    }
 
     @Composable
     private fun IconGallery() {

@@ -81,9 +81,16 @@ val LightOnErrorContainer = Color(0xFF410002)
 // --- Temaya bağlı olmayan sabitler ---
 
 /**
- * Saydamlığın görüldüğü damalı zemin. Koyu temada da açık gri kalıyor:
- * damalı zeminin işi "burada piksel yok" demek, ve kullanıcılar bu deseni
- * açık griyle tanıyor.
+ * Saydamlığın görüldüğü damalı zemin; her temada iki ton.
+ *
+ * Önce "desen her temada açık gri kalsın, kullanıcı onu böyle tanıyor" denmişti.
+ * Cihazda bakınca tutmadı: koyu temada tuvalin tamamı ekranın geri kalanının
+ * yanında parlayan beyaz bir levha oluyordu ve sticker'ın gerçek renklerini
+ * doğru göstermesi gereken nötr zemin gözü yanıltıyordu. Photoshop ve Figma da
+ * koyu temada deseni koyultuyor; tanınırlığı sağlayan şey ton değil, desenin
+ * kendisi.
  */
-val CheckerLight = Color(0xFFE9E9EF)
-val CheckerDark = Color(0xFFD2D2DC)
+val CheckerLightCellA = Color(0xFFECECF1)
+val CheckerLightCellB = Color(0xFFD6D6DF)
+val CheckerDarkCellA = Color(0xFF23232C)
+val CheckerDarkCellB = Color(0xFF1A1A22)

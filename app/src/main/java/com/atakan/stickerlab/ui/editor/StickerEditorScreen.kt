@@ -16,17 +16,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -50,11 +58,19 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.atakan.stickerlab.ui.theme.CheckerDarkCellA
+import com.atakan.stickerlab.ui.theme.CheckerDarkCellB
+import com.atakan.stickerlab.ui.theme.CheckerLightCellA
+import com.atakan.stickerlab.ui.theme.CheckerLightCellB
+import com.atakan.stickerlab.ui.theme.StickerIcons
 import kotlin.math.roundToInt
 
 /**
@@ -76,7 +92,16 @@ fun StickerEditorScreen(
 
     // enableEdgeToEdge açık: bu ekran Scaffold içinde olmadığı için üst ve alt
     // sistem çubuklarının altında kalan butonlar tıklanamıyordu.
-    Column(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+    //
+    // Zemin rengi burada açıkça veriliyor: tam ekran modal olduğu için altındaki
+    // Surface'e güvenmemeli — tasarım turunda üst bar beyaz bir şerit olarak
+    // çıkıyordu.
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .systemBarsPadding(),
+    ) {
         TopBar(
             canUndo = state.canUndo,
             canRedo = state.canRedo,
@@ -124,6 +149,11 @@ fun StickerEditorScreen(
     }
 }
 
+/**
+ * Üst bar yalnızca ikon: metin butonları ("Kapat / Geri al / İleri / Bitti")
+ * yan yana dizilince satırın yarısını kaplıyor, oysa hepsi tanıdık ikonlar.
+ * Tek istisna "Bitti" — ekranın birincil aksiyonu, dolu buton olarak duruyor.
+ */
 @Composable
 private fun TopBar(
     canUndo: Boolean,
@@ -134,15 +164,41 @@ private fun TopBar(
     onApply: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        TextButton(onClick = onClose) { Text("Kapat") }
+        BarIconButton(StickerIcons.Close, "Kapat", onClick = onClose)
         Row(modifier = Modifier.weight(1f), horizontalArrangement = Arrangement.Center) {
-            TextButton(onClick = onUndo, enabled = canUndo) { Text("Geri al") }
-            TextButton(onClick = onRedo, enabled = canRedo) { Text("İleri") }
+            BarIconButton(StickerIcons.Undo, "Geri al", enabled = canUndo, onClick = onUndo)
+            BarIconButton(StickerIcons.Redo, "İleri", enabled = canRedo, onClick = onRedo)
         }
-        Button(onClick = onApply) { Text("Bitti") }
+        FilledIconButton(
+            onClick = onApply,
+            modifier = Modifier.size(BAR_BUTTON),
+            shape = RoundedCornerShape(14.dp),
+        ) {
+            Icon(StickerIcons.Check, contentDescription = "Bitti", modifier = Modifier.size(24.dp))
+        }
+    }
+}
+
+@Composable
+private fun BarIconButton(
+    icon: ImageVector,
+    label: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.size(BAR_BUTTON),
+        colors = IconButtonDefaults.iconButtonColors(
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+    ) {
+        Icon(icon, contentDescription = label, modifier = Modifier.size(24.dp))
     }
 }
 
@@ -177,6 +233,10 @@ private fun EditorCanvas(
 
     val imageWidth = state.original.width
     val imageHeight = state.original.height
+
+    // isSystemInDarkTheme() değil: tasarım turu temayı elle zorluyor, damalı
+    // zemin de gerçekten çizilen temayı izlemeli.
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     var cursor by remember(state) { mutableStateOf<Offset?>(null) }
 
@@ -284,7 +344,7 @@ private fun EditorCanvas(
         // Damalı zemin ayrı katmanda: DstIn uygulanan katmanın içinde olsaydı
         // o da kesilirdi.
         Canvas(modifier = Modifier.fillMaxSize()) {
-            drawCheckerboard()
+            drawCheckerboard(darkTheme)
             if (transform.canvasSize != size) {
                 transform.canvasSize = size
                 if (transform.scale <= 0f) fitToCanvas(size)
@@ -387,125 +447,287 @@ private fun StickerEditorState.Tool.usesBrush(): Boolean =
         this == StickerEditorState.Tool.Restore ||
         this == StickerEditorState.Tool.Pen
 
+/**
+ * Alt araç çubuğu.
+ *
+ * Önceden üç satırdı (boyut + araç chip'leri + fırça/lasso chip'leri) ve ekranın
+ * alt üçte birini yiyordu; asıl iş ise tuvalde. Şimdi **tek araç satırı** var,
+ * seçili aracın seçenekleri onun üstünde bağlama göre tek satırda beliriyor.
+ * Chip'ler ~32dp idi, yani önerilen 48dp dokunma hedefinin altında.
+ */
 @Composable
 private fun ToolBar(state: StickerEditorState, onEditText: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp)) {
-
-        when {
-            state.tool == StickerEditorState.Tool.Text -> {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Boyut", style = MaterialTheme.typography.bodySmall)
-                    Slider(
-                        value = state.textSizePx,
-                        // Seçili metin varsa slider onu doğrudan boyutlandırır.
-                        onValueChange = { state.setTextSize(it) },
-                        valueRange = StickerEditorState.MIN_TEXT_SIZE..StickerEditorState.MAX_TEXT_SIZE,
-                        modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            // Açık temada çubuk zemini tuvalle neredeyse aynı beyazlıkta;
+            // çubuğun nerede başladığını bu ince çizgi söylüyor.
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
+                ToolOptions(state)
+                ToolHint(state)
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                ) {
+                    ToolButton(state, StickerEditorState.Tool.Erase, StickerIcons.Erase, "Sil")
+                    ToolButton(
+                        state,
+                        StickerEditorState.Tool.Restore,
+                        StickerIcons.Restore,
+                        "Geri getir",
                     )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onEditText) { Text("Metin ekle") }
-                    if (state.hasSelectedStamp) {
-                        TextButton(onClick = state::deselectStamp) { Text("Bitir") }
+                    ToolButton(state, StickerEditorState.Tool.Pen, StickerIcons.Pen, "Kalem")
+                    // Metin aracına dokunmak doğrudan yazma diyalogunu açıyor:
+                    // önceki akışta önce araç seçilip sonra "Metin ekle"ye
+                    // basılıyordu, yani iki dokunuş ve alt çubukta fazladan bir
+                    // buton demekti. Seçili bir metin varken dokunuş sadece araca
+                    // dönüyor, yazılan iptal olmasın diye.
+                    ToolButton(
+                        state,
+                        StickerEditorState.Tool.Text,
+                        StickerIcons.TextTool,
+                        "Metin",
+                    ) {
+                        val wasText = state.tool == StickerEditorState.Tool.Text
+                        state.tool = StickerEditorState.Tool.Text
+                        if (!state.hasSelectedStamp || wasText) onEditText()
                     }
                 }
-                Text(
-                    text = if (state.hasSelectedStamp) {
-                        "Tek parmakla taşı, iki parmakla boyutlandır. " +
-                            "Bitir'e basınca iki parmak yine resmi yakınlaştırır."
-                    } else {
-                        "\"Metin ekle\" ile yaz. Var olan bir metne dokunarak " +
-                            "tekrar seçebilirsin."
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-
-            state.mode == StickerEditorState.Mode.Lasso -> Text(
-                text = "Bir alanın çevresini çiz, parmağını kaldırınca içi uygulanır.",
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            )
-
-            else -> Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Boyut", style = MaterialTheme.typography.bodySmall)
-                Slider(
-                    value = state.brushRadiusPx,
-                    onValueChange = { state.brushRadiusPx = it },
-                    valueRange = StickerEditorState.MIN_BRUSH_RADIUS..StickerEditorState.MAX_BRUSH_RADIUS,
-                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-                )
-            }
-        }
-
-        // Renk sadece ekleyen araçları ilgilendiriyor; silgi ve geri getirmede yer kaplamaz.
-        if (state.tool == StickerEditorState.Tool.Pen || state.tool == StickerEditorState.Tool.Text) {
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                StickerEditorState.PALETTE.forEach { color ->
-                    val selected = color == state.penColor
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(Color(color))
-                            .border(
-                                width = if (selected) 3.dp else 1.dp,
-                                color = if (selected) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    Color(0xFF9E9E9E)
-                                },
-                                shape = CircleShape,
-                            )
-                            .clickable { state.penColor = color },
-                    )
-                }
-            }
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            ToolChip(state, StickerEditorState.Tool.Erase, "Sil")
-            ToolChip(state, StickerEditorState.Tool.Restore, "Geri getir")
-            ToolChip(state, StickerEditorState.Tool.Pen, "Kalem")
-            ToolChip(state, StickerEditorState.Tool.Text, "Metin")
-        }
-
-        // Fırça/lasso ayrımı sadece maskeyi boyayan araçlar için anlamlı.
-        if (state.tool == StickerEditorState.Tool.Erase ||
-            state.tool == StickerEditorState.Tool.Restore
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                FilterChip(
-                    selected = state.mode == StickerEditorState.Mode.Brush,
-                    onClick = { state.mode = StickerEditorState.Mode.Brush },
-                    label = { Text("Fırça") },
-                )
-                FilterChip(
-                    selected = state.mode == StickerEditorState.Mode.Lasso,
-                    onClick = { state.mode = StickerEditorState.Mode.Lasso },
-                    label = { Text("Lasso") },
-                )
             }
         }
     }
 }
 
+/** Seçili aracın seçenekleri; hepsi tek satır, yükseklik araç değişince oynamıyor. */
 @Composable
-private fun ToolChip(state: StickerEditorState, tool: StickerEditorState.Tool, label: String) {
-    FilterChip(
-        selected = state.tool == tool,
-        onClick = { state.tool = tool },
-        label = { Text(label) },
+private fun ToolOptions(state: StickerEditorState) {
+    Row(
+        modifier = Modifier.fillMaxWidth().heightIn(min = OPTION_ROW),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        when (state.tool) {
+            StickerEditorState.Tool.Text -> {
+                SizeSlider(
+                    value = state.textSizePx,
+                    // Seçili metin varsa slider onu doğrudan boyutlandırır.
+                    onValueChange = state::setTextSize,
+                    range = StickerEditorState.MIN_TEXT_SIZE..StickerEditorState.MAX_TEXT_SIZE,
+                )
+                Palette(state, modifier = Modifier.weight(1f))
+                if (state.hasSelectedStamp) {
+                    TextButton(onClick = state::deselectStamp) { Text("Bitir") }
+                }
+            }
+
+            StickerEditorState.Tool.Pen -> {
+                SizeSlider(
+                    value = state.brushRadiusPx,
+                    onValueChange = { state.brushRadiusPx = it },
+                    range = StickerEditorState.MIN_BRUSH_RADIUS..StickerEditorState.MAX_BRUSH_RADIUS,
+                )
+                Palette(state, modifier = Modifier.weight(1f))
+            }
+
+            // Fırça/lasso ayrımı sadece maskeyi boyayan araçlar için anlamlı.
+            else -> {
+                ModeToggle(state)
+                if (state.mode == StickerEditorState.Mode.Brush) {
+                    Slider(
+                        value = state.brushRadiusPx,
+                        onValueChange = { state.brushRadiusPx = it },
+                        valueRange = StickerEditorState.MIN_BRUSH_RADIUS..
+                            StickerEditorState.MAX_BRUSH_RADIUS,
+                        colors = editorSliderColors(),
+                        modifier = Modifier.weight(1f).padding(start = 8.dp),
+                    )
+                } else {
+                    Box(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Boyut slider'ı renk paletiyle aynı satırı paylaştığı için sabit genişlikte:
+ * fırça boyutu hassas bir ayar değil, palet ise dokuz renkle daha çok yer
+ * istiyor.
+ */
+@Composable
+private fun SizeSlider(
+    value: Float,
+    onValueChange: (Float) -> Unit,
+    range: ClosedFloatingPointRange<Float>,
+) {
+    Slider(
+        value = value,
+        onValueChange = onValueChange,
+        valueRange = range,
+        colors = editorSliderColors(),
+        modifier = Modifier.size(width = 124.dp, height = OPTION_ROW),
+    )
+}
+
+/**
+ * Slider'ın boş kısmı için nötr ton.
+ *
+ * Material varsayılanı `secondaryContainer`; tema o yuvayı marka menekşesinin
+ * koyu tonuna bağladığı için (bkz. `Theme.kt`) koyu temada boş kısım dolu kadar
+ * güçlü görünüyor, çubuk "sonuna kadar açık" izlenimi veriyordu.
+ */
+@Composable
+private fun editorSliderColors() = SliderDefaults.colors(
+    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+)
+
+@Composable
+private fun Palette(state: StickerEditorState, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StickerEditorState.PALETTE.forEach { color ->
+            val selected = color == state.penColor
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(CircleShape)
+                    .background(Color(color))
+                    .border(
+                        width = if (selected) 3.dp else 1.dp,
+                        color = if (selected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        },
+                        shape = CircleShape,
+                    )
+                    .clickable { state.penColor = color },
+            )
+        }
+    }
+}
+
+@Composable
+private fun ModeToggle(state: StickerEditorState) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+    ) {
+        ModeButton(state, StickerEditorState.Mode.Brush, StickerIcons.Brush, "Fırça")
+        ModeButton(state, StickerEditorState.Mode.Lasso, StickerIcons.Lasso, "Lasso")
+    }
+}
+
+@Composable
+private fun ModeButton(
+    state: StickerEditorState,
+    mode: StickerEditorState.Mode,
+    icon: ImageVector,
+    label: String,
+) {
+    val selected = state.mode == mode
+    Box(
+        modifier = Modifier
+            .size(OPTION_ROW)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+            )
+            .clickable { state.mode = mode },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            modifier = Modifier.size(22.dp),
+            tint = if (selected) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
+    }
+}
+
+/**
+ * Büyük, tek dokunuşta vurulan araç butonu: 56dp kutu, altında etiket.
+ * Etiket kalıyor çünkü "Sil" ile "Geri getir" ikonları tek başına yeterince
+ * ayırt edici değil.
+ *
+ * Seçili durumun dili [ModeButton] ile aynı: dolu `primary` zemin, `onPrimary`
+ * ikon. Önce burada `primaryContainer` kullanılıyordu; cihazda iki sorun çıktı —
+ * fırça/lasso düğmesinin hemen üstünde ikinci bir menekşe tonu oluyordu ve açık
+ * temada araç çubuğunun zemininden ayırt edilemediği için seçili araç
+ * kayboluyordu.
+ */
+@Composable
+private fun ToolButton(
+    state: StickerEditorState,
+    tool: StickerEditorState.Tool,
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit = { state.tool = tool },
+) {
+    val selected = state.tool == tool
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Box(
+            modifier = Modifier
+                .size(TOOL_BUTTON)
+                .clip(RoundedCornerShape(18.dp))
+                .background(
+                    if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                )
+                .clickable(onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                modifier = Modifier.size(28.dp),
+                tint = if (selected) {
+                    MaterialTheme.colorScheme.onPrimary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+            )
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (selected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
+    }
+}
+
+/** Yalnızca gerçekten gereken durumlarda tek satırlık açıklama. */
+@Composable
+private fun ToolHint(state: StickerEditorState) {
+    val hint = when {
+        state.tool == StickerEditorState.Tool.Text && state.hasSelectedStamp ->
+            "Tek parmakla taşı, iki parmakla boyutlandır."
+
+        state.tool == StickerEditorState.Tool.Text ->
+            "Var olan bir metne dokunarak tekrar seçebilirsin."
+
+        state.mode == StickerEditorState.Mode.Lasso ->
+            "Bir alanın çevresini çiz, parmağını kaldırınca içi uygulanır."
+
+        else -> return
+    }
+    Text(
+        text = hint,
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
     )
 }
 
@@ -560,6 +782,15 @@ private fun TextDialog(
 /** Jest testleri tuvali bu etiketle buluyor. */
 const val EDITOR_CANVAS_TAG = "editorCanvas"
 
+/** Araç butonu: 56dp, önerilen 48dp dokunma hedefinin rahatça üstünde. */
+private val TOOL_BUTTON = 56.dp
+
+/** Üst bardaki ikon butonlar. */
+private val BAR_BUTTON = 48.dp
+
+/** Seçenek satırının yüksekliği; araç değişince çubuk zıplamasın diye sabit. */
+private val OPTION_ROW = 48.dp
+
 private val QUICK_EMOJI = listOf("😀", "😂", "😍", "🔥", "👍", "🎉", "❤️", "😎", "🤔", "💀")
 
 private fun destination(offset: Offset) =
@@ -578,9 +809,18 @@ private fun maxScale(canvas: Size, imageWidth: Int, imageHeight: Int): Float {
     return minOf(canvas.width / imageWidth, canvas.height / imageHeight) * 16f
 }
 
-private fun DrawScope.drawCheckerboard() {
-    val cell = 24f
-    drawRect(color = Color(0xFFFFFFFF))
+/**
+ * Saydamlığı gösteren damalı zemin. Temaya göre koyu ya da açık tonlar; gerekçe
+ * [CheckerLightCellA] tanımında.
+ *
+ * Hücre boyutu dp: ham piksel olduğunda yoğun ekranlarda desen görünmez
+ * inceliğe düşüyordu.
+ */
+private fun DrawScope.drawCheckerboard(darkTheme: Boolean) {
+    val cell = 8.dp.toPx()
+    val cellA = if (darkTheme) CheckerDarkCellA else CheckerLightCellA
+    val cellB = if (darkTheme) CheckerDarkCellB else CheckerLightCellB
+    drawRect(color = cellA)
     var row = 0
     var y = 0f
     while (y < size.height) {
@@ -588,11 +828,7 @@ private fun DrawScope.drawCheckerboard() {
         var x = 0f
         while (x < size.width) {
             if ((row + column) % 2 == 1) {
-                drawRect(
-                    color = Color(0xFFE0E0E0),
-                    topLeft = Offset(x, y),
-                    size = Size(cell, cell),
-                )
+                drawRect(color = cellB, topLeft = Offset(x, y), size = Size(cell, cell))
             }
             x += cell
             column++

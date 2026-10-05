@@ -27,8 +27,8 @@ yarışmamalı.
 |---|---|---|
 | 1 | Tema temeli: renk şeması (açık + koyu), tipografi, köşe yarıçapları | ✅ |
 | 2 | İkon seti | ✅ |
-| 3 | Editör araç çubuğu: tek satır büyük ikon butonlar | sırada |
-| 4 | Pack listesi + detay: büyük kartlar, tek birincil aksiyon, marka boş durumu | |
+| 3 | Editör araç çubuğu: tek satır büyük ikon butonlar | ✅ |
+| 4 | Pack listesi + detay: büyük kartlar, tek birincil aksiyon, marka boş durumu | sırada |
 | 5 | Cila: dokunma geri bildirimi, geçişler | |
 
 ### Faz 1 — tema (tamam)
@@ -53,19 +53,60 @@ ve çizgi kalınlığı marka diline uygun (24dp tuval, 2dp çizgi, yuvarlak uç
 Bir düzeltme gerekti: ilk çizimde Fırça ile Kalem neredeyse aynıydı. Fırça,
 Lasso'nun karşıtı olan "serbest çizim" modu — darbenin kendisi çizilerek ayrıldı.
 
-### Faz 3 — editör araç çubuğu (sırada)
+### Faz 3 — editör araç çubuğu (tamam)
 
-Bugünkü sorun: araç çubuğu **üç satır** (boyut slider'ı + araç chip'leri +
-fırça/lasso chip'leri). Ekranın alt üçte biri araçlara gidiyor, hâlbuki asıl iş
-tuvalde. Chip'ler ~32dp; önerilen dokunma hedefi 48dp.
+Önceki sorun: araç çubuğu **üç–dört satırdı** (boyut slider'ı + renk paleti +
+araç chip'leri + fırça/lasso chip'leri). Ekranın alt üçte biri araçlara
+gidiyordu, hâlbuki asıl iş tuvalde. Chip'ler ~32dp idi; önerilen dokunma hedefi
+48dp.
 
-Hedef:
-- Tek satır, 56dp ikon butonlar: sil / geri getir / kalem / metin
-- Seçili aracın seçenekleri (boyut, renk, fırça-lasso) **bağlama göre** tek satırda
-- Üst bar metin butonları (Kapat / Geri al / İleri / Bitti) ikonlara dönsün
-- Damalı zemin koyu temaya uyarlansın
+Şimdi: tek **56dp** araç satırı (sil / geri getir / kalem / metin), üstünde
+seçili aracın seçeneklerini taşıyan tek satır, gerektiğinde araya sıkışan tek
+satırlık ipucu. Üst bar tamamen ikon; "Bitti" birincil aksiyon olduğu için dolu
+buton olarak kaldı.
 
-### Faz 4 — pack listesi ve detay
+Alınan kararlar:
+
+**Araç butonlarında etiket kaldı.** Hedef "ikon butonlar"dı ama Sil ile Geri
+getir ikonları tek başına yeterince ayırt edici değil — 56dp kutunun altına
+`labelSmall` etiket kondu. Satır yine tek satır.
+
+**Boyut slider'ı sabit 124dp.** Kalem ve metinde slider ile dokuz renkli palet
+aynı satırı paylaşıyor. Slider'ı `weight` ile esnetmek paleti iki renge
+düşürüyordu; fırça boyutu hassas bir ayar değil, palet ise yer istiyor. Palet
+kaydırılabilir.
+
+**Seçenek satırı sabit yükseklikte (48dp).** Araç değişince alt çubuk zıplıyor
+ve parmak yanlış butona iniyordu.
+
+**Metin akışı bir dokunuş kısaldı** — ayrıntısı [EKRANLAR.md](EKRANLAR.md) 2.4'te.
+
+**Damalı zemin artık temayı izliyor.** Faz 1'de "desen her temada açık gri
+kalsın, kullanıcı onu böyle tanıyor" denmişti; cihazda bakınca tutmadı, koyu
+temada tuvalin tamamı parlayan beyaz bir levha oluyordu ve sticker'ın gerçek
+renklerini göstermesi gereken nötr zemin gözü yanıltıyordu — yani temanın
+kendi gerekçesine aykırı. Photoshop ve Figma da koyu temada deseni koyultuyor;
+tanınırlığı sağlayan ton değil, desenin kendisi. Hücre boyutu da ham pikselden
+dp'ye geçti (yoğun ekranlarda desen görünmez inceliğe düşüyordu) ve 8dp'ye
+indi.
+
+**Seçili durumun tek dili: dolu `primary` zemin.** İlk denemede araç butonu
+`primaryContainer`, fırça/lasso düğmesi `primary` kullanıyordu; cihazda üst üste
+iki farklı menekşe çıktı ve açık temada `primaryContainer` araç çubuğunun
+zemininden ayırt edilemediği için seçili araç kayboluyordu.
+
+**Slider'ın boş kısmı elle nötrlendi.** Material varsayılanı `secondaryContainer`;
+tema o yuvayı marka menekşesine bağladığı için koyu temada boş kısım dolu kadar
+güçlü görünüyor, çubuk "sonuna kadar açık" izlenimi veriyordu.
+
+**Editör kendi zemin rengini çiziyor.** Tam ekran modal; altındaki `Surface`'e
+güvendiği için tasarım turunda üst bar beyaz bir şerit olarak çıkıyordu.
+Uygulamada doğru görünüyordu ama ekranın kendi kendine ayakta durması gerekiyor.
+
+Alt çubuk ayrıca `surfaceContainerHigh` + 1dp ayırıcı çizgi aldı: açık temada
+çubuk zemini tuvalle neredeyse aynı beyazlıktaydı.
+
+### Faz 4 — pack listesi ve detay (sırada)
 
 - Pack satırında "Aç" ve "WhatsApp'a Ekle" sıkışık; satırın kendisi de tıklanabilir,
   yani iki yol aynı şeyi yapıyor. Tek birincil aksiyon + overflow olmalı
@@ -91,4 +132,6 @@ adb shell am instrument -w -e class com.atakan.stickerlab.ui.DesignPreviewTest \
 adb pull /sdcard/Android/data/com.atakan.stickerlab/files/design
 ```
 
-Yeni ekranlar Faz 3–4'te bu düzeneğe eklenecek.
+Faz 3'te editör ekranı da düzeneğe girdi: `editor-erase-dark/light`,
+`editor-pen-dark` (boyut + palet aynı satırda), `editor-lasso-dark` (slider
+yerine ipucu). Faz 4'te pack listesi eklenecek.
