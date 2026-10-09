@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -12,6 +13,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,6 +27,11 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.atakan.stickerlab.data.db.PackWithStickers
+import com.atakan.stickerlab.data.entity.StickerEntity
+import com.atakan.stickerlab.data.entity.StickerPackEntity
+import com.atakan.stickerlab.ui.packlist.EmptyPacks
+import com.atakan.stickerlab.ui.packlist.PackRow
 import com.atakan.stickerlab.ui.editor.StickerEditorScreen
 import com.atakan.stickerlab.ui.editor.StickerEditorState
 import com.atakan.stickerlab.ui.editor.StickerEditorState.Tool
@@ -97,6 +104,67 @@ class DesignPreviewTest {
     fun editor_lasso_koyu() =
         captureEditor("editor-lasso-dark", true, Tool.Erase, StickerEditorState.Mode.Lasso)
 
+    // --- pack listesi (Faz 4) ---
+
+    @Test
+    fun pack_satiri_koyu() = capturePackRows("packs-dark", darkTheme = true)
+
+    @Test
+    fun pack_satiri_acik() = capturePackRows("packs-light", darkTheme = false)
+
+    @Test
+    fun bos_durum_koyu() = capture("empty-dark", darkTheme = true) {
+        EmptyPacks(onCreate = {}, modifier = Modifier.fillMaxWidth().height(600.dp))
+    }
+
+    @Test
+    fun bos_durum_acik() = capture("empty-light", darkTheme = false) {
+        EmptyPacks(onCreate = {}, modifier = Modifier.fillMaxWidth().height(600.dp))
+    }
+
+    /**
+     * Üç durum bir arada: yayınlanabilir pack, eksik sticker'lı pack ve
+     * WhatsApp kurulu değilken aynı satır.
+     */
+    private fun capturePackRows(name: String, darkTheme: Boolean) {
+        val tray = File(
+            InstrumentationRegistry.getInstrumentation().targetContext.cacheDir,
+            "design-tray.png",
+        )
+        if (!tray.isFile) {
+            Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888)
+                .apply { eraseColor(android.graphics.Color.rgb(0x5B, 0x45, 0xE0)) }
+                .let { bitmap ->
+                    tray.outputStream().use { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                }
+        }
+        capture(name, darkTheme) {
+            Column(
+                modifier = Modifier
+
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                PackRow(packWithStickers(5), tray, whatsAppInstalled = true, onOpen = {}) {}
+                PackRow(packWithStickers(1), tray, whatsAppInstalled = true, onOpen = {}) {}
+                PackRow(packWithStickers(5), tray, whatsAppInstalled = false, onOpen = {}) {}
+            }
+        }
+    }
+
+    private fun packWithStickers(count: Int) = PackWithStickers(
+        pack = StickerPackEntity(
+            id = 1,
+            identifier = "design",
+            name = "Tatil Fotoğrafları",
+            publisher = "Atakan",
+            trayFileName = "tray.png",
+        ),
+        stickers = (1..count).map {
+            StickerEntity(id = it.toLong(), packId = 1, fileName = "$it.webp", emojis = "😀")
+        },
+    )
+
     private fun captureEditor(
         name: String,
         darkTheme: Boolean,
@@ -147,7 +215,13 @@ class DesignPreviewTest {
     private fun capture(name: String, darkTheme: Boolean, content: @Composable () -> Unit) {
         rule.setContent {
             StickerLabTheme(darkTheme = darkTheme) {
-                Column(modifier = Modifier.testTag(CAPTURE_TAG)) { content() }
+                // MainActivity ile aynı sarmalama. Olmadığı sürece düzenek
+                // yalan söylüyordu: Surface dışında metin rengi onSurface değil
+                // siyaha düşüyor, zemin de boş kalıyor — koyu tema çekimleri
+                // beyaz zeminli, siyah yazılı çıkıyordu.
+                Surface(color = MaterialTheme.colorScheme.background) {
+                    Column(modifier = Modifier.testTag(CAPTURE_TAG)) { content() }
+                }
             }
         }
         rule.waitForIdle()

@@ -5,13 +5,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.Image
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
+import com.atakan.stickerlab.ui.theme.CheckerDarkCellA
+import com.atakan.stickerlab.ui.theme.CheckerLightCellA
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -48,8 +51,16 @@ fun StickerThumbnail(
 ) {
     val bitmap = rememberFileBitmap(file, version)
     Box(
-        // Saydamlığın görünmesi için düz zemin.
-        modifier = modifier.background(THUMBNAIL_BACKGROUND),
+        // Saydamlığın görünmesi için düz zemin. Editördeki damalı zeminle aynı
+        // tonlar: sabit açık griydi, koyu temada sticker'lar koyu kartların
+        // üstünde parlayan beyaz karelere dönüyordu.
+        modifier = modifier.background(
+            if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+                CheckerDarkCellA
+            } else {
+                CheckerLightCellA
+            },
+        ),
     ) {
         if (bitmap != null) {
             Image(
@@ -71,4 +82,3 @@ private fun sampleSizeFor(width: Int, height: Int, maxSize: Int): Int {
     return sample
 }
 
-private val THUMBNAIL_BACKGROUND = Color(0xFFEDEDED)

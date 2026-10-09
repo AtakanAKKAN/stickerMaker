@@ -58,6 +58,13 @@ object StickerIcons {
         }
     }
 
+    /** İleri gidiş: [Back]'in aynası. Liste satırında "buraya girilir" demek için. */
+    val Chevron: ImageVector = icon("Chevron") {
+        stroke {
+            moveTo(9f, 5f); lineTo(16f, 12f); lineTo(9f, 19f)
+        }
+    }
+
     val Close: ImageVector = icon("Close") {
         stroke {
             moveTo(6f, 6f); lineTo(18f, 18f)

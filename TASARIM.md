@@ -28,8 +28,8 @@ yarışmamalı.
 | 1 | Tema temeli: renk şeması (açık + koyu), tipografi, köşe yarıçapları | ✅ |
 | 2 | İkon seti | ✅ |
 | 3 | Editör araç çubuğu: tek satır büyük ikon butonlar | ✅ |
-| 4 | Pack listesi + detay: büyük kartlar, tek birincil aksiyon, marka boş durumu | sırada |
-| 5 | Cila: dokunma geri bildirimi, geçişler | |
+| 4 | Pack listesi + detay: büyük kartlar, tek birincil aksiyon, marka boş durumu | ✅ |
+| 5 | Cila: dokunma geri bildirimi, geçişler | sırada |
 
 ### Faz 1 — tema (tamam)
 
@@ -106,12 +106,49 @@ Uygulamada doğru görünüyordu ama ekranın kendi kendine ayakta durması gere
 Alt çubuk ayrıca `surfaceContainerHigh` + 1dp ayırıcı çizgi aldı: açık temada
 çubuk zemini tuvalle neredeyse aynı beyazlıktaydı.
 
-### Faz 4 — pack listesi ve detay (sırada)
+### Faz 4 — pack listesi ve detay (tamam)
 
-- Pack satırında "Aç" ve "WhatsApp'a Ekle" sıkışık; satırın kendisi de tıklanabilir,
-  yani iki yol aynı şeyi yapıyor. Tek birincil aksiyon + overflow olmalı
-- Tray ikonu daha belirgin
-- Boş durum düz yazı; marka görseli gelmeli
+**Pack kartında tek birincil aksiyon kaldı.** "Aç" butonu gitti; karta dokunmak
+pack'i açıyor, bunu sağdaki chevron söylüyor. Görünen tek buton ekranın asıl
+tekrar eden işi: tam genişlikte **WhatsApp'a Ekle**.
+
+**Overflow menüsü eklenmedi** — plan "tek birincil aksiyon + overflow" diyordu
+ama içine koyacak bir şey çıkmadı. Yeniden adlandırma ve silme pack detayında
+yaşıyor; listeye de konsaydı tam da kaldırdığımız "aynı işe iki yol" sorunu geri
+gelirdi.
+
+**Tray ikonu 56dp'den 72dp'ye çıktı**, ince bir çerçeve aldı. WhatsApp'ta pack'i
+temsil eden görsel o; listede de pack'in yüzü olmalı, oysa kartın içinde
+kayboluyordu.
+
+**Durum notu kendi zeminine oturdu.** "2 sticker daha gerekli" / "WhatsApp kurulu
+değil" düz küçük yazıydı ve butonun neden kapalı olduğunu söylemesi gerekirken
+görünmüyordu.
+
+**Boş durum marka yüzünü kullanıyor:** menekşe daire içinde launcher ikonunun
+sarı sticker yüzü. Ayrı illüstrasyon çizmek yerine uygulamanın kendi markası —
+yeni dosya yok.
+
+Detay ekranında: üst bar metin butonları ikonlara döndü, seçim modu üst barı
+`primaryContainer` ile renklenerek normal moddan ayrıldı, alt aksiyonlar
+editördeki araç butonlarıyla aynı dili konuşuyor (ikon + etiket, "Sil" kırmızı),
+"+ Sticker" yuvarlak butondan grid hücresine dönüştü.
+
+İki şey tasarım turunda cihazda görülüp düzeltildi:
+
+- **Sticker küçük resimlerinin zemini sabit açık griydi** (`#EDEDED`). Koyu temada
+  sticker'lar koyu kartların üstünde parlayan beyaz karelere dönüyordu; artık
+  editörün damalı zemin tonlarını kullanıyor.
+- **Tasarım turu düzeneğinin kendisi yalan söylüyordu:** `MainActivity` içeriği bir
+  `Surface` ile sarıyor, düzenek sarmıyordu. `Surface` dışında metin rengi
+  `onSurface` değil siyaha düşüyor, zemin de boş kalıyor — koyu tema çekimleri
+  beyaz zeminli, siyah yazılı çıkıyordu. Düzenek `MainActivity` ile aynı sarmalamayı
+  yapıyor artık.
+
+**Planda olup yapılamayan:** grid'de tray ikonunun hangi sticker olduğunu
+işaretlemek. Tray her pack'te `tray.png` adıyla ayrı bir kopya olarak tutuluyor,
+yani hangi sticker'dan üretildiği veritabanında yazmıyor. Şema değişikliği
+gerektirir; Faz 5'e not düşüldü.
 
 ### Faz 5 — cila
 
@@ -134,4 +171,10 @@ adb pull /sdcard/Android/data/com.atakan.stickerlab/files/design
 
 Faz 3'te editör ekranı da düzeneğe girdi: `editor-erase-dark/light`,
 `editor-pen-dark` (boyut + palet aynı satırda), `editor-lasso-dark` (slider
-yerine ipucu). Faz 4'te pack listesi eklenecek.
+yerine ipucu). Faz 4'te pack kartı (`packs-dark/light` — üç durum bir arada) ve
+boş durum (`empty-dark/light`) eklendi.
+
+Pack **detayı** düzeneğe giremiyor: ekran Hilt ViewModel'ine bağlı, `createComposeRule`
+içinde kurulamıyor. O ekranı emülatörde uygulamayı açıp `adb shell input tap` ile
+gezerek çektik; telefonda bu mümkün değil (MIUI girdi enjeksiyonunu engelliyor),
+emülatörde çalışıyor.

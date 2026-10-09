@@ -50,16 +50,21 @@ Uygulama açılışı. M6 ile tamamlandı.
 
 | Öğe | İçerik |
 |---|---|
-| Satır | Tray icon (96px), pack adı, "N sticker", WhatsApp durum rozeti |
-| Rozet | `N sticker daha gerekli` / `Pack dolu` |
-| Aksiyon | Satıra dokun → detay. Butona dokun → WhatsApp'a ekle |
+| Kart | Tray ikonu (72dp, çerçeveli), pack adı, "N sticker", chevron |
+| Rozet | `N sticker daha gerekli` / `Pack dolu` / `WhatsApp kurulu değil` |
+| Aksiyon | Karta dokun → detay. Tam genişlikte tek buton → WhatsApp'a ekle |
 | FAB | Yeni pack |
-| Boş durum | "Henüz pack yok" + tek buton |
+| Boş durum | Marka yüzü + "Henüz pack yok" + açıklama + buton |
 
 **Kararlar:**
 
 - WhatsApp'a ekleme butonu **liste seviyesinde** kalıyor, detaya gömülmüyor.
   En sık tekrarlanan iş; bir seviye derine koymak maliyet.
+- **Kartta tek görünür buton var.** Önce hem "Aç" butonu hem tıklanabilir kart
+  vardı — aynı yere çıkan iki yol — ve yanındaki "WhatsApp'a Ekle" ile satır
+  sıkışıyordu. Açma işini kart üstleniyor, chevron bunu söylüyor.
+- **Overflow menüsü yok.** Yeniden adlandırma ve silme pack detayında yaşıyor;
+  listeye de konsaydı kaldırılan "aynı işe iki yol" sorunu geri gelirdi.
 - **`Eklendi` rozeti henüz yok.** WhatsApp'ın
   `sticker_whitelist_check` provider'ına sorulacaktı; M6'da yapılmadı, cila adımı
   olarak duruyor. Yapılırsa sorgu başarısız olduğunda rozet hiç gösterilmemeli —
@@ -72,14 +77,16 @@ Sticker grid'i (3 sütun, kare hücreler, şeffaflık için damalı zemin).
 
 | Öğe | İçerik |
 |---|---|
-| Üst bar | Pack adı (dokun → yeniden adlandır), overflow: tray değiştir, pack sil |
-| Grid | Sticker'lar + son hücrede `+ Sticker` |
-| Alt bar | Yalnız seçim modunda: Taşı / Kopyala / Sil |
+| Üst bar | Geri ikonu, pack adı, overflow (⋮): yeniden adlandır, pack sil |
+| Grid | Sticker'lar + son hücrede `+ Sticker` (grid hücresi formunda) |
+| Alt bar | Yalnız seçim modunda: Taşı / Kopyala / Sil — ikon + etiket, "Sil" kırmızı |
 | Uyarı şeridi | 3'ten az sticker varsa: "WhatsApp'a eklemek için N sticker daha gerekli" |
 
 **Kararlar:**
 
 - Sticker'a **dokun** → detay; **uzun bas** → seçim modu. Standart Android davranışı.
+- **Seçim modu üst barı renk değiştiriyor** (`primaryContainer`). Hangi moddasın
+  sorusunun cevabı başlık metnini okumayı gerektirmemeli.
 - Pack adı değişse bile `identifier` sabit kalıyor (UUID). Görünmez ama yeniden
   adlandırma WhatsApp'taki pack'i sıfırlamasın diye kritik.
 - Tray icon varsayılan olarak ilk sticker'dan 96×96 üretiliyor; kullanıcı

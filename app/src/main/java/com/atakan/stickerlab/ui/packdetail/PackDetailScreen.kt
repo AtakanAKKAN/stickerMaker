@@ -1,7 +1,9 @@
 package com.atakan.stickerlab.ui.packdetail
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -23,15 +26,19 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -41,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,6 +57,7 @@ import com.atakan.stickerlab.data.PackRules
 import com.atakan.stickerlab.data.db.PackWithStickers
 import com.atakan.stickerlab.data.entity.StickerEntity
 import com.atakan.stickerlab.ui.common.StickerThumbnail
+import com.atakan.stickerlab.ui.theme.StickerIcons
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -108,14 +117,22 @@ fun PackDetailScreen(
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             val count = current.stickers.size
             if (!PackRules.isPublishable(count)) {
+                // Kural WhatsApp'tan geliyor, kullanıcı tahmin edemez; o yüzden
+                // düz küçük yazı değil, kendi zemini olan bir şerit.
                 Text(
                     text = if (count < PackRules.MIN_STICKERS) {
                         "WhatsApp'a eklemek için ${PackRules.MIN_STICKERS - count} sticker daha gerekli."
                     } else {
                         "Pack dolu (${PackRules.MAX_STICKERS} sticker)."
                     },
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(MaterialTheme.colorScheme.tertiaryContainer)
+                        .padding(horizontal = 14.dp, vertical = 10.dp),
                 )
             }
 
@@ -166,10 +183,34 @@ fun PackDetailScreen(
 
                 if (PackRules.canAddSticker(current.stickers.size)) {
                     item {
-                        OutlinedButton(
-                            onClick = { onAddSticker(current.pack.id) },
-                            modifier = Modifier.aspectRatio(1f),
-                        ) { Text("+ Sticker") }
+                        // Grid'in bir hücresi gibi duruyor: yuvarlak bir
+                        // OutlinedButton komşularının kare formuyla çelişiyordu.
+                        Column(
+                            modifier = Modifier
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline,
+                                    shape = RoundedCornerShape(12.dp),
+                                )
+                                .clickable { onAddSticker(current.pack.id) },
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                        ) {
+                            Icon(
+                                imageVector = StickerIcons.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(28.dp),
+                            )
+                            Text(
+                                text = "Sticker",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
+                        }
                     }
                 }
             }
@@ -247,6 +288,7 @@ fun PackDetailScreen(
 
 enum class TransferKind { Move, Copy }
 
+/** Üst bar metin butonları ("Geri", "Daha fazla") ikonlara döndü; editörle aynı dil. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DetailTopBar(
@@ -258,16 +300,27 @@ private fun DetailTopBar(
     var menuOpen by remember { mutableStateOf(false) }
     TopAppBar(
         title = { Text(title) },
-        navigationIcon = { TextButton(onClick = onBack) { Text("Geri") } },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(StickerIcons.Back, contentDescription = "Geri")
+            }
+        },
         actions = {
-            TextButton(onClick = { menuOpen = true }) { Text("Daha fazla") }
+            IconButton(onClick = { menuOpen = true }) {
+                Icon(StickerIcons.More, contentDescription = "Daha fazla")
+            }
             DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                 DropdownMenuItem(
                     text = { Text("Yeniden adlandır") },
+                    leadingIcon = { Icon(StickerIcons.Rename, contentDescription = null) },
                     onClick = { menuOpen = false; onRename() },
                 )
                 DropdownMenuItem(
                     text = { Text("Pack'i sil") },
+                    leadingIcon = { Icon(StickerIcons.Delete, contentDescription = null) },
                     onClick = { menuOpen = false; onDelete() },
                 )
             }
@@ -280,7 +333,18 @@ private fun DetailTopBar(
 private fun SelectionTopBar(count: Int, onClear: () -> Unit) {
     TopAppBar(
         title = { Text("$count seçili") },
-        navigationIcon = { TextButton(onClick = onClear) { Text("Vazgeç") } },
+        // Seçim modu normal moddan rengiyle ayrılıyor: hangi moddasın sorusunun
+        // cevabı başlık metnine bakmayı gerektirmemeli.
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ),
+        navigationIcon = {
+            IconButton(onClick = onClear) {
+                Icon(StickerIcons.Close, contentDescription = "Seçimi bırak")
+            }
+        },
     )
 }
 
@@ -290,18 +354,53 @@ private fun SelectionActions(
     onCopy: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    Row(
-        // Scaffold alt çubuğun kendi insetini uygulamıyor; bu olmadan butonlar
-        // telefonun gezinme çubuğuyla çakışıyor.
+    Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+        Column {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Row(
+                // Scaffold alt çubuğun kendi insetini uygulamıyor; bu olmadan butonlar
+                // telefonun gezinme çubuğuyla çakışıyor.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            ) {
+                SelectionAction(StickerIcons.Move, "Taşı", onMove)
+                SelectionAction(StickerIcons.Copy, "Kopyala", onCopy)
+                SelectionAction(StickerIcons.Delete, "Sil", onDelete, destructive = true)
+            }
+        }
+    }
+}
+
+/** Editördeki araç butonuyla aynı ölçü: 56dp kutu, altında etiket. */
+@Composable
+private fun SelectionAction(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+    destructive: Boolean = false,
+) {
+    val tint = if (destructive) {
+        MaterialTheme.colorScheme.error
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
-        OutlinedButton(onClick = onMove) { Text("Taşı") }
-        OutlinedButton(onClick = onCopy) { Text("Kopyala") }
-        OutlinedButton(onClick = onDelete) { Text("Sil") }
+        Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(26.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = tint,
+            modifier = Modifier.padding(top = 2.dp),
+        )
     }
 }
 

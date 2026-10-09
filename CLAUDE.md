@@ -22,8 +22,12 @@ Google Play **dahili test** kanalından davetli arkadaşlara dağıtılıyor.
 - Editör: sil/geri getir fırçası, lasso, renkli kalem, metin/emoji, zoom-pan, undo/redo
 - Çoklu pack: detay, seçim modu, taşıma/kopyalama, tray ikonu
 
-**Devam eden:** tasarım yenilemesi. Faz 1–3 bitti (tema, ikonlar, editör araç
-çubuğu), Faz 4'ten devam — bkz. [TASARIM.md](TASARIM.md).
+**Devam eden:** tasarım yenilemesi. Faz 1–4 bitti (tema, ikonlar, editör araç
+çubuğu, pack listesi + detay), Faz 5'ten (cila) devam — bkz. [TASARIM.md](TASARIM.md).
+
+> Play'deki `versionCode 1` tasarım çalışmasının **tamamından önce** derlendi.
+> Telefonda görünen uygulama o; yeni bir AAB yüklenene kadar hiçbir tasarım
+> değişikliği kullanıcıya ulaşmıyor.
 
 ---
 
