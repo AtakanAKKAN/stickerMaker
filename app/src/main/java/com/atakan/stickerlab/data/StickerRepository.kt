@@ -132,6 +132,65 @@ class StickerRepository @Inject constructor(
         affectedPacks.forEach { invalidatePack(it) }
     }
 
+    /**
+     * Pack'in tray ikonu diskte yoksa ilk sticker'ından üretir.
+     *
+     * Taşıma ve kopyalama bir pack'i sticker'la doldurabiliyor ama tray
+     * üretmiyordu — tray yalnızca [addSticker]'da pack'in **ilk** sticker'ında
+     * çıkıyor. Ortaya veritabanında `tray.png` yazan ama dosyası hiç yazılmamış
+     * bir pack çıkıyordu; WhatsApp bunu `handleStickerPackPreviewResult/failed`
+     * ile reddediyor ve provider log'una tek satır düşüyor:
+     * "Dosya bulunamadı ya da klasör dışında: .../tray.png".
+     *
+     * Hatanın asıl bedeli teşhis edilemezliği: aynı mesaj `readPermission`
+     * eksikliğinde de çıkıyor (bkz. CLAUDE.md), yani belirti iki farklı sebebi
+     * işaret ediyor.
+     */
+    private suspend fun ensureTray(packId: Long) {
+        val pack = dao.getPackById(packId) ?: return
+        val trayFile = File(
+            StickerFiles.packDir(context, pack.identifier),
+            StickerFiles.TRAY_FILE_NAME,
+        )
+        if (trayFile.isFile) return
+
+        val first = dao.getStickersForPack(packId).firstOrNull() ?: return
+        val source = StickerFiles.stickerFile(context, pack.identifier, first.fileName)
+        val bitmap = BitmapFactory.decodeFile(source.absolutePath) ?: run {
+            Log.e(TAG, "Tray üretilemedi, sticker okunamadı: ${source.name}")
+            return
+        }
+        try {
+            exporter.exportTray(bitmap, trayFile)
+            if (pack.trayFileName != StickerFiles.TRAY_FILE_NAME) {
+                dao.setTrayFileName(pack.id, StickerFiles.TRAY_FILE_NAME)
+            }
+            Log.i(TAG, "Eksik tray üretildi: ${pack.identifier}")
+        } finally {
+            bitmap.recycle()
+        }
+    }
+
+    /**
+     * Açılışta çalışır: tray'i eksik kalmış pack'leri onarır.
+     *
+     * Düzeltmeden önce taşıma/kopyalama ile doldurulan pack'ler bozuk kaldı ve
+     * kullanıcının cihazında duruyorlar; sadece yeni pack'leri doğru üretmek
+     * onları kurtarmıyor.
+     */
+    suspend fun repairMissingTrays() {
+        dao.getAllPacksSync().forEach { pack ->
+            val trayFile = File(
+                StickerFiles.packDir(context, pack.identifier),
+                StickerFiles.TRAY_FILE_NAME,
+            )
+            if (trayFile.isFile) return@forEach
+            ensureTray(pack.id)
+            // Tray değişti: sürüm artmadan WhatsApp eski (boş) veriyi gösterir.
+            if (trayFile.isFile) invalidatePack(pack.id)
+        }
+    }
+
     /** Seçilen sticker'dan 96×96 tray ikonu üretir. */
     suspend fun setTrayFromSticker(stickerId: Long) {
         val sticker = dao.getStickerById(stickerId) ?: return
@@ -196,6 +255,10 @@ class StickerRepository @Inject constructor(
             dao.reassignSticker(sticker.id, targetPackId, newFileName, position)
         }
 
+        // Hedef pack bu taşımayla ilk sticker'larını almış olabilir; tray'i
+        // sürüm artmadan önce yerine koy.
+        ensureTray(targetPackId)
+
         invalidatePack(sourcePackId)
         invalidatePack(targetPackId)
         Log.i(TAG, "${stickers.size} sticker taşındı: ${source.identifier} -> ${target.identifier}")
@@ -235,6 +298,8 @@ class StickerRepository @Inject constructor(
             )
         }
         dao.insertStickers(copies)
+
+        ensureTray(targetPackId)
 
         // Kaynak pack değişmedi; sadece hedefin sürümü artıyor.
         invalidatePack(targetPackId)

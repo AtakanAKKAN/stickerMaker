@@ -85,6 +85,27 @@ bomboş, hata `handleStickerPackPreviewResult/failed`.
 Yan etkisi: `adb shell content query` bu provider'da çalışmaz (shell o izne sahip
 değil). Teşhis için logcat kullan.
 
+### `handleStickerPackPreviewResult/failed` iki farklı şeyin belirtisi
+
+Bu mesaj WhatsApp'ın "pack'i doğrulayamadım" demesi, sebebini söylemiyor. İki kez
+farklı kökten çıktı, **ayırt eden şey provider log'u**:
+
+```bash
+adb logcat -d -s AddPackToWhatsApp StickerProvider
+```
+
+- Provider log'u **bomboş** → WhatsApp provider'ı hiç göremiyor: yukarıdaki
+  `readPermission` eksik.
+- Provider log'unda **`Dosya bulunamadı ya da klasör dışında: .../tray.png`** →
+  pack'in tray ikonu diskte yok. 15 Ekim 2026'da kullanıcının cihazında oldu:
+  taşıma ve kopyalama bir pack'i sticker'la dolduruyor ama tray üretmiyordu
+  (tray yalnızca `addSticker`'ın ilk sticker dalında çıkıyor). Düzeltildi —
+  `StickerRepository.ensureTray` + açılışta `repairMissingTrays`, testlerle
+  sabitlendi.
+
+Ders: provider bir dosyayı bulamadığında bunu log'luyor ve o satır teşhisin
+tamamı. Belirtiye değil, provider log'una bak.
+
 ### Telefon: Redmi / HyperOS
 
 - **Yeni paket kurulumu** telefonda onay ekranı çıkarıyor; `adb install` o onay

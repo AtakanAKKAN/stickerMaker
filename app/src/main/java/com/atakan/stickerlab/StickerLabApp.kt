@@ -18,6 +18,11 @@ class StickerLabApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        scope.launch { repository.seedIfEmpty() }
+        scope.launch {
+            repository.seedIfEmpty()
+            // Taşıma/kopyalama ile doldurulan pack'lerde tray hiç üretilmiyordu;
+            // o sürümde bozulan pack'ler kullanıcının cihazında duruyor.
+            repository.repairMissingTrays()
+        }
     }
 }

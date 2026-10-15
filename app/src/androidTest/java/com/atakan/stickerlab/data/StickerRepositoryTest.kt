@@ -11,6 +11,7 @@ import com.atakan.stickerlab.data.db.StickerPackDao
 import com.atakan.stickerlab.export.StickerExporter
 import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -274,7 +275,75 @@ class StickerRepositoryTest {
         assertTrue("WhatsApp en az bir emoji istiyor", updated.emojis.isNotBlank())
     }
 
+    // --- tray ikonu ---
+    //
+    // Tray yalnızca addSticker'da, pack'in ilk sticker'ında üretiliyordu; taşıma
+    // ve kopyalama hiç üretmiyordu. Sonuç: veritabanında "tray.png" yazan ama
+    // dosyası olmayan pack. WhatsApp bunu handleStickerPackPreviewResult/failed
+    // ile reddediyor — üstelik readPermission eksikliğiyle aynı mesaj, yani
+    // belirti yanlış sebebi işaret ediyor. Kullanıcıda bir kez gerçekleşti.
+
+    @Test
+    fun bos_packe_tasima_tray_uretiyor() = runBlocking {
+        val source = packWith(6)
+        val target = repository.createPack("Hedef-${System.nanoTime()}")
+
+        repository.moveStickers(stickerIds(source).take(3), target)
+
+        assertTrue("Taşımayla dolan pack tray'siz kalıyor", trayFile(target).isFile)
+    }
+
+    @Test
+    fun bos_packe_kopyalama_tray_uretiyor() = runBlocking {
+        val source = packWith(3)
+        val target = repository.createPack("Hedef-${System.nanoTime()}")
+
+        repository.copyStickers(stickerIds(source), target)
+
+        assertTrue("Kopyalamayla dolan pack tray'siz kalıyor", trayFile(target).isFile)
+    }
+
+    /** Var olan tray'in üzerine yazılmamalı: kullanıcı onu elle seçmiş olabilir. */
+    @Test
+    fun kopyalama_mevcut_trayi_degistirmiyor() = runBlocking {
+        val source = packWith(3)
+        val target = packWith(3)
+        val before = trayFile(target).readBytes()
+
+        repository.copyStickers(stickerIds(source), target)
+
+        assertArrayEquals(before, trayFile(target).readBytes())
+    }
+
+    /** Eski sürümde bozulan pack'ler kullanıcının cihazında duruyor. */
+    @Test
+    fun acilis_onarimi_eksik_trayi_geri_getiriyor() = runBlocking {
+        val packId = packWith(3)
+        assertTrue(trayFile(packId).delete())
+
+        repository.repairMissingTrays()
+
+        assertTrue("Açılış onarımı tray'i geri koymuyor", trayFile(packId).isFile)
+    }
+
+    @Test
+    fun onarim_stickersiz_packte_patlamiyor() = runBlocking {
+        val packId = repository.createPack("Bos-${System.nanoTime()}")
+
+        repository.repairMissingTrays()
+
+        assertFalse(trayFile(packId).isFile)
+    }
+
     // --- yardımcılar ---
+
+    private suspend fun trayFile(packId: Long): java.io.File {
+        val pack = dao.getPackById(packId)!!
+        return java.io.File(
+            StickerFiles.packDir(context, pack.identifier),
+            StickerFiles.TRAY_FILE_NAME,
+        )
+    }
 
     private suspend fun packWith(stickerCount: Int): Long {
         val packId = repository.createPack("Pack $stickerCount-${System.nanoTime()}")
