@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.atakan.stickerlab.BuildConfig
 import com.atakan.stickerlab.R
 import com.atakan.stickerlab.data.PackRules
 import com.atakan.stickerlab.data.db.PackWithStickers
@@ -91,7 +92,20 @@ fun PackListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("StickerLab") },
+                title = {
+                    Column {
+                        Text("StickerLab")
+                        // Sürüm ana ekranda duruyor: Play'den gelen güncellemenin
+                        // cihaza inip inmediğini anlamanın tek yolu buydu, çünkü
+                        // bir sürümde hiç görünür değişiklik olmayabiliyor.
+                        // versionCode da yazılı — Play Console'da takip edilen o.
+                        Text(
+                            text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
