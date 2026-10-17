@@ -22,7 +22,7 @@ Saf **Kotlin + Jetpack Compose**, tek modül. React Native / Expo **kullanılmı
 
 ### v2'ye ertelenenler
 - Boş canvas'a serbest çizim (v1 altyapısıyla hiçbir şey paylaşmıyor, ayrı uygulama büyüklüğünde)
-- Animasyonlu sticker (libwebp NDK derlemesi veya ffmpeg bundle = +25MB APK, kişisel kullanım için maliyeti faydasından fazla)
+- Animasyonlu sticker — **gerekçe çürüdü, karar yeniden açık.** Buraya "libwebp NDK derlemesi veya ffmpeg bundle = +25MB APK" diye yazılmıştı; 17 Ekim 2026'da denendi ve yanlış çıktı. Her kareyi Android'in kendi `Bitmap.compress(WEBP)` çağrısıyla sıkıştırıp RIFF kaplarını (VP8X/ANIM/ANMF) **saf Java'da** örmek yetiyor: NDK yok, `.so` yok, projenin ASCII olmayan yolu sorun değil. Ölçüm: 512×512, 12 kare, quality 80 → **56 KB** (limit 500 KB), `ImageDecoder` geri okuduğunda `AnimatedImageDrawable`. Bkz. `AnimatedWebPSpikeTest`. Geriye kalan asıl iş encoder değil, **kaynak akışı**: video/GIF'ten kare çıkarma, kare başına arka plan silme, süre kırpma.
 
 ### Bilinçli kabul edilen sınır
 Arka plan kesme kalitesi Google'ın ML Kit modelinin kalitesidir. Marketteki uygulamalar da aynı modeli kullanıyor; otomatik kesimde onlardan daha iyi olunamaz. Fark yaratılacak yer **manuel rötuş aracının kalitesi** — çoğu rakipte ya yok ya kötü.

@@ -113,4 +113,9 @@ dependencies {
     androidTestImplementation(libs.androidx.test.runner)
     // API 37 emulatorunde eski espresso InputManager.getInstance arıyor ve patlıyor
     androidTestImplementation(libs.androidx.test.espresso.core)
+
+    // Animasyonlu WebP encoder — yalnızca fizibilite denemesi için, uygulamaya
+    // GİRMİYOR (bkz. AnimatedWebPSpikeTest). Saf Java, NDK istemiyor; ama
+    // appcompat ve iki decoder modülü çekiyor, o yüzden androidTest tarafında.
+    androidTestImplementation("com.github.penfeizhou.android.animation:awebpencoder:3.0.5")
 }
